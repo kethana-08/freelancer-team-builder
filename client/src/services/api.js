@@ -1,12 +1,11 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   headers: {
     'Content-Type': 'application/json',
   },
 });
-
 // Attach Authorization Bearer token to every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('team_builder_token');
@@ -26,7 +25,7 @@ api.interceptors.response.use(
       const refreshToken = localStorage.getItem('team_builder_refresh_token');
       if (refreshToken) {
         try {
-          const res = await axios.post('/api/auth/refresh', { refreshToken });
+          const res = await api.post('/auth/refresh', { refreshToken });
           if (res.data.success) {
             localStorage.setItem('team_builder_token', res.data.data.accessToken);
             localStorage.setItem('team_builder_refresh_token', res.data.data.refreshToken);
