@@ -1,6 +1,5 @@
 import { User } from '../models/User.js';
-import { cloudinary, isConfigured as isCloudinaryConfigured } from '../config/cloudinary.js';
-import fs from 'fs';
+import { uploadBuffer } from '../config/cloudinary.js';
 
 export const getFreelancers = async (req, res, next) => {
   try {
@@ -108,21 +107,13 @@ export const uploadAvatar = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Please upload an image file.' });
     }
 
-    let avatarUrl = `/uploads/${req.file.filename}`;
+    // Upload image buffer directly to Cloudinary
+    const uploadResult = await uploadBuffer(req.file.buffer, {
+      folder: 'freelancer-team-builder/avatars',
+      transformation: [{ width: 400, height: 400, crop: 'fill', gravity: 'face' }]
+    });
 
-    if (isCloudinaryConfigured) {
-      try {
-        const result = await cloudinary.uploader.upload(req.file.path, {
-          folder: 'freelancer-team-builder/avatars',
-          transformation: [{ width: 400, height: 400, crop: 'fill', gravity: 'face' }]
-        });
-        avatarUrl = result.secure_url;
-        // Clean up local temp file
-        fs.unlinkSync(req.file.path);
-      } catch (cloudErr) {
-        console.warn('Cloudinary upload failed, falling back to local file:', cloudErr.message);
-      }
-    }
+    const avatarUrl = uploadResult.secure_url;
 
     const user = await User.findByIdAndUpdate(
       req.user._id,

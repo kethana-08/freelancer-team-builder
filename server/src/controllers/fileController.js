@@ -1,8 +1,7 @@
 import { ProjectFile } from '../models/ProjectFile.js';
 import { Project } from '../models/Project.js';
 import { Activity } from '../models/Activity.js';
-import { cloudinary, isConfigured as isCloudinaryConfigured } from '../config/cloudinary.js';
-import fs from 'fs';
+import { uploadBuffer } from '../config/cloudinary.js';
 import path from 'path';
 
 export const getProjectFiles = async (req, res, next) => {
@@ -31,20 +30,13 @@ export const uploadProjectFile = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Please attach a file.' });
     }
 
-    let fileUrl = `/uploads/${req.file.filename}`;
+    // Upload file buffer directly to Cloudinary
+    const uploadResult = await uploadBuffer(req.file.buffer, {
+      folder: `freelancer-team-builder/projects/${projectId}`,
+      resource_type: 'auto'
+    });
 
-    if (isCloudinaryConfigured) {
-      try {
-        const uploadResult = await cloudinary.uploader.upload(req.file.path, {
-          folder: `freelancer-team-builder/projects/${projectId}`,
-          resource_type: 'auto'
-        });
-        fileUrl = uploadResult.secure_url;
-        fs.unlinkSync(req.file.path);
-      } catch (cloudErr) {
-        console.warn('Cloudinary upload fallback to local storage:', cloudErr.message);
-      }
-    }
+    const fileUrl = uploadResult.secure_url;
 
     // Determine simplified file type
     const ext = path.extname(req.file.originalname).toLowerCase();
