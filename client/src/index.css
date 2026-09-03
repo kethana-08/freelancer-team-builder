@@ -57,6 +57,10 @@ button, a, input, select, textarea { min-width: 0; }
   .modal-panel { max-height: calc(100dvh - 2rem); overflow-y: auto; }
   .mobile-stack { flex-direction: column; align-items: stretch; }
   .mobile-stack > * { width: 100%; }
+  .navbar-scroll-area { width: 100%; max-width: 100%; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .navbar-scroll-area::-webkit-scrollbar { display: none; }
+  .navbar-row { width: max-content; min-width: 100%; }
+  .navbar-brand-group, .navbar-actions { flex-shrink: 0; }
 }
 
 @media (max-width: 479px) {
