@@ -32,7 +32,7 @@ export const Modal = ({
 
       <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
         <div
-          className={`modal-panel relative transform overflow-hidden rounded-xl bg-slate-900 border border-slate-700/60 p-4 sm:p-6 text-left shadow-2xl transition-all sm:my-8 w-full ${maxWidth} surface-panel`}
+          className={`modal-panel relative transform overflow-x-hidden rounded-xl bg-slate-900 border border-slate-700/60 p-4 sm:p-6 text-left shadow-2xl transition-all sm:my-8 w-full max-w-[calc(100vw-2rem)] ${maxWidth} surface-panel`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}

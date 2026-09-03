@@ -11,37 +11,49 @@ export const SocketProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    // Initialize socket connection
-    const newSocket = io(window.location.origin, {
-      auth: { token: token || '' },
-      transports: ['websocket', 'polling'],
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000
+  const socketUrl = import.meta.env.VITE_API_URL
+    ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '')
+    : 'http://localhost:5000';
+
+  const newSocket = io(socketUrl, {
+    auth: { token: token || '' },
+   transports: ['polling', 'websocket'],
+    upgrade: true,
+  rememberUpgrade: false,
+  forceNew: true,
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000
+});
+
+  newSocket.on('connect', () => {
+    setIsConnected(true);
+  });
+
+  newSocket.on('disconnect', () => {
+    setIsConnected(false);
+  });
+
+  newSocket.on('user_online_status', ({ userId, status }) => {
+    setOnlineUsers(prev => {
+      const next = new Set(prev);
+
+      if (status === 'online') {
+        next.add(userId);
+      } else {
+        next.delete(userId);
+      }
+
+      return next;
     });
+  });
 
-    newSocket.on('connect', () => {
-      setIsConnected(true);
-    });
+  setSocket(newSocket);
 
-    newSocket.on('disconnect', () => {
-      setIsConnected(false);
-    });
-
-    newSocket.on('user_online_status', ({ userId, status }) => {
-      setOnlineUsers(prev => {
-        const next = new Set(prev);
-        if (status === 'online') next.add(userId);
-        else next.delete(userId);
-        return next;
-      });
-    });
-
-    setSocket(newSocket);
-
-    return () => {
-      newSocket.disconnect();
-    };
-  }, [token, user?._id]);
+  return () => {
+    newSocket.disconnect();
+  };
+}, [token, user?._id]);
 
   const joinProject = (projectId) => {
     if (socket && isConnected) {

@@ -70,10 +70,10 @@ export const Navbar = () => {
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-fuchsia-500 flex items-center justify-center shadow-glow group-hover:scale-105 transition-transform">
                 <Layers className="w-5 h-5 text-white" />
               </div>
-              <div>
-                <span className="text-lg font-extrabold tracking-tight text-white flex items-center gap-1.5">
+              <div className="navbar-brand-label min-w-0">
+                <span className="text-lg font-extrabold tracking-tight text-white flex items-center gap-1.5 whitespace-nowrap">
                   TeamBuilder
-                  <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-md bg-indigo-950 border border-indigo-500/40 text-indigo-400">
+                  <span className="navbar-brand-badge text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-md bg-indigo-950 border border-indigo-500/40 text-indigo-400">
                     AI Match
                   </span>
                 </span>
@@ -187,11 +187,11 @@ export const Navbar = () => {
               <button
                 type="button"
                 onClick={() => setDemoDropdownOpen(!demoDropdownOpen)}
-                className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-indigo-500/50 text-xs font-semibold text-slate-300 hover:text-white transition-all shadow-sm max-w-full"
+                className="navbar-demo-control flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-indigo-500/50 text-xs font-semibold text-slate-300 hover:text-white transition-all shadow-sm max-w-full"
               >
                 <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-                <span className="hidden sm:inline">1-Click Demo:</span>
-                <span className="text-indigo-300 font-bold capitalize">{user?.role || 'Switch'}</span>
+                <span className="navbar-demo-label hidden sm:inline">1-Click Demo:</span>
+                <span className="navbar-demo-label text-indigo-300 font-bold capitalize">{user?.role || 'Switch'}</span>
                 <ChevronDown className="w-3 h-3 text-slate-500 ml-0.5" />
               </button>
 
