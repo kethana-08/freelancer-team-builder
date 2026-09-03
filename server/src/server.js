@@ -88,22 +88,45 @@ app.get('/api/health', (req, res) => {
 
 // Central Error Handler
 app.use(errorHandler);
+let dbInitialized = false;
 
-const PORT = process.env.PORT || 5000;
-
-// Start Server after connecting DB
-const startServer = async () => {
-  try {
+const initializeDB = async () => {
+  if (!dbInitialized) {
     await connectDB();
     await seedDatabase();
-
-    server.listen(PORT, () => {
-      console.log(`🚀 Freelancer Team Builder Server running in ${process.env.NODE_ENV || 'development'} mode on http://localhost:${PORT}`);
-    });
-  } catch (error) {
-    console.error('Fatal Server Startup Error:', error);
-    process.exit(1);
+    dbInitialized = true;
   }
 };
 
-startServer();
+// Vercel serverless handler
+export default async function handler(req, res) {
+  try {
+    await initializeDB();
+    return app(req, res);
+  } catch (error) {
+    console.error('Server initialization error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server initialization failed',
+      error: error.message
+    });
+  }
+}
+
+// Local development server
+if (process.env.NODE_ENV !== 'production') {
+  const PORT = process.env.PORT || 5000;
+
+  initializeDB()
+    .then(() => {
+      server.listen(PORT, () => {
+        console.log(
+          `🚀 Server running on http://localhost:${PORT}`
+        );
+      });
+    })
+    .catch((error) => {
+      console.error('❌ Server startup failed:', error);
+      process.exit(1);
+    });
+}

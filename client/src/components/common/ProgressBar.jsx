@@ -19,8 +19,8 @@ export const ProgressBar = ({
   };
 
   const colors = {
-    indigo: 'bg-gradient-to-r from-indigo-500 to-indigo-600 shadow-glow',
-    emerald: 'bg-gradient-to-r from-emerald-500 to-teal-500 shadow-glow-emerald',
+    indigo: 'bg-indigo-600',
+    emerald: 'bg-emerald-600',
     amber: 'bg-gradient-to-r from-amber-500 to-orange-500',
     rose: 'bg-gradient-to-r from-rose-500 to-pink-500',
     accent: 'bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500',

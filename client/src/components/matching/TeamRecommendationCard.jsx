@@ -262,7 +262,7 @@ export const TeamRecommendationCard = ({
           {/* Skill Coverage Table */}
           <div>
             <h4 className="text-sm font-semibold text-slate-200 mb-2">Required Skills Coverage Table</h4>
-            <div className="bg-slate-950 rounded-xl border border-slate-800 overflow-hidden">
+            <div className="table-container bg-slate-950 rounded-xl border border-slate-800 overflow-hidden">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-900 text-slate-400 border-b border-slate-800 font-semibold">
                   <tr>

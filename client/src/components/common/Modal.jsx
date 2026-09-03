@@ -26,13 +26,13 @@ export const Modal = ({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
       <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
         <div
-          className={`relative transform overflow-hidden rounded-2xl bg-slate-900 border border-slate-700/60 p-6 text-left shadow-2xl transition-all sm:my-8 w-full ${maxWidth} glass-panel`}
+          className={`modal-panel relative transform overflow-hidden rounded-xl bg-slate-900 border border-slate-700/60 p-4 sm:p-6 text-left shadow-2xl transition-all sm:my-8 w-full ${maxWidth} surface-panel`}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}

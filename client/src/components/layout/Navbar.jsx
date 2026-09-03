@@ -14,16 +14,20 @@ import {
   Menu,
   X,
   Layers,
-  ChevronDown
+  ChevronDown,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { Avatar } from '../common/Avatar';
 import { Badge } from '../common/Badge';
+import { useTheme } from '../../context/ThemeContext';
 
 export const Navbar = () => {
   const { user, isAuthenticated, isClient, isFreelancer, isAdmin, logout, demoLogin } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme, toggleTheme } = useTheme();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -78,7 +82,7 @@ export const Navbar = () => {
 
             {/* Desktop Navigation Links */}
             {isAuthenticated && (
-              <nav className="hidden md:flex items-center gap-1">
+              <nav className="desktop-nav hidden lg:flex items-center gap-1 min-w-0">
                 {isClient && (
                   <>
                     <Link
@@ -169,12 +173,21 @@ export const Navbar = () => {
 
           {/* Right Action Section */}
           <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+              className="p-2 rounded-lg text-slate-400 hover:text-indigo-400 hover:bg-slate-900 border border-transparent hover:border-slate-800 transition-colors"
+            >
+              {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
             {/* Demo Account Switcher Dropdown */}
-            <div className="relative">
+            <div className="relative max-w-[9rem] sm:max-w-none">
               <button
                 type="button"
                 onClick={() => setDemoDropdownOpen(!demoDropdownOpen)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-indigo-500/50 text-xs font-semibold text-slate-300 hover:text-white transition-all shadow-sm"
+                className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-indigo-500/50 text-xs font-semibold text-slate-300 hover:text-white transition-all shadow-sm max-w-full"
               >
                 <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
                 <span className="hidden sm:inline">1-Click Demo:</span>
@@ -318,7 +331,8 @@ export const Navbar = () => {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900"
+              className="lg:hidden p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900"
+              aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6 text-white" />}
             </button>
@@ -328,7 +342,7 @@ export const Navbar = () => {
 
       {/* Mobile Menu Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden px-4 pt-2 pb-4 bg-slate-950 border-b border-slate-800 space-y-1.5">
+        <div className="lg:hidden px-4 pt-2 pb-4 bg-slate-950 border-b border-slate-800 space-y-1.5">
           {isAuthenticated ? (
             <>
               {isClient && (

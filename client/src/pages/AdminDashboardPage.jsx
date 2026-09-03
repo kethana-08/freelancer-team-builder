@@ -194,7 +194,7 @@ export const AdminDashboardPage = () => {
             All Active & Formulated Projects ({projects.length})
           </h3>
 
-          <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
+          <div className="table-container bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 font-semibold">
                 <tr>
@@ -273,7 +273,7 @@ export const AdminDashboardPage = () => {
             </select>
           </div>
 
-          <div className="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
+          <div className="table-container bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 font-semibold">
                 <tr>

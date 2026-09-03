@@ -19,7 +19,7 @@ import { AdminDashboardPage } from './pages/AdminDashboardPage';
 
 function App() {
   return (
-    <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-indigo-600 selection:text-white">
+    <div className="app-shell min-h-screen flex flex-col bg-slate-950 text-slate-100 selection:bg-indigo-600 selection:text-white">
       <Navbar />
 
       <main className="flex-1">

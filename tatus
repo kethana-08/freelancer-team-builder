@@ -1,0 +1,11 @@
+warning: in the working copy of 'server/src/config/cloudinary.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/src/controllers/fileController.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/src/controllers/userController.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/src/middleware/upload.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/src/server.js', LF will be replaced by CRLF the next time Git touches it
+ server/src/config/cloudinary.js          | 23 [32m++++++++++++++++++++[m
+ server/src/controllers/fileController.js | 22 [32m++++++[m[31m-------------[m
+ server/src/controllers/userController.js | 25 [32m+++++++[m[31m--------------[m
+ server/src/middleware/upload.js          | 37 [32m++++++++++++[m[31m--------------------[m
+ server/src/server.js                     |  2 [31m--[m
+ 5 files changed, 52 insertions(+), 57 deletions(-)

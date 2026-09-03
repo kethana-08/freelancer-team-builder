@@ -91,7 +91,7 @@ export const ChatTab = ({ project, messages = [], onNewMessage }) => {
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl flex flex-col h-[650px] overflow-hidden shadow-xl">
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl flex flex-col h-[650px] max-h-[calc(100dvh-9rem)] min-h-[420px] overflow-hidden shadow-xl min-w-0">
       {/* Chat Header */}
       <div className="p-4 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -140,7 +140,7 @@ export const ChatTab = ({ project, messages = [], onNewMessage }) => {
               )}
 
               <div
-                className={`max-w-md rounded-2xl p-3.5 shadow-md ${
+                className={`max-w-[min(32rem,calc(100vw-5rem))] rounded-2xl p-3.5 shadow-md ${
                   isMe
                     ? 'bg-indigo-600 text-white rounded-br-none'
                     : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-bl-none'
@@ -216,7 +216,7 @@ export const ChatTab = ({ project, messages = [], onNewMessage }) => {
       )}
 
       {/* Message Input Box */}
-      <form onSubmit={handleSendMessage} className="p-3 bg-slate-950 border-t border-slate-800 flex items-center gap-2">
+      <form onSubmit={handleSendMessage} className="p-3 bg-slate-950 border-t border-slate-800 flex items-center gap-2 min-w-0">
         <input
           type="text"
           placeholder="Type your message, ask a question, or share an update..."
@@ -231,6 +231,7 @@ export const ChatTab = ({ project, messages = [], onNewMessage }) => {
           size="sm"
           disabled={!inputMessage.trim() || sending}
           icon={Send}
+          className="shrink-0"
         >
           Send
         </Button>
