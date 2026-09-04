@@ -1,5 +1,6 @@
 import { verifyAccessToken } from '../utils/token.js';
 import { User } from '../models/User.js';
+import { Project } from '../models/Project.js';
 
 export const setupSocketIO = (io) => {
   // Track online users
@@ -35,9 +36,22 @@ export const setupSocketIO = (io) => {
     }
 
     // Join Project Workspace Room
-    socket.on('join_project', ({ projectId }) => {
-      if (projectId) {
-        socket.join(`project_${projectId}`);
+    socket.on('join_project', async ({ projectId } = {}) => {
+      try {
+        if (!projectId || userId === 'guest') return;
+
+        const project = await Project.findById(projectId).select('client teamMembers.user');
+        const isMember = project && (
+          socket.user.role === 'admin' ||
+          project.client.toString() === userId ||
+          project.teamMembers.some(member => member.user.toString() === userId)
+        );
+
+        if (isMember) {
+          socket.join(`project_${projectId}`);
+        }
+      } catch (error) {
+        console.error('Project room join failed:', error.message);
       }
     });
 
@@ -81,6 +95,9 @@ export const setupSocketIO = (io) => {
     },
     emitToUser: (userId, event, data) => {
       io.to(`user_${userId}`).emit(event, data);
+    },
+    leaveUserFromProject: (userId, projectId) => {
+      io.in(`user_${userId}`).socketsLeave(`project_${projectId}`);
     },
     getOnlineUsers: () => Array.from(onlineUsers.keys())
   };

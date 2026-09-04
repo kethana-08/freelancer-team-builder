@@ -1,5 +1,6 @@
 import { Message } from '../models/Message.js';
 import { Project } from '../models/Project.js';
+import { emitToProject } from '../services/workspaceEvents.js';
 
 export const getProjectMessages = async (req, res, next) => {
   try {
@@ -41,7 +42,8 @@ export const sendMessage = async (req, res, next) => {
     const populatedMessage = await Message.findById(message._id)
       .populate('sender', 'name email avatar role title');
 
-    // Return to sender (client app will also broadcast to socket room)
+    emitToProject(req, projectId, 'workspace:message_sent', { message: populatedMessage });
+
     res.status(201).json({
       success: true,
       data: { message: populatedMessage }

@@ -8,6 +8,7 @@ import { ProjectFile } from '../models/ProjectFile.js';
 import { Message } from '../models/Message.js';
 import mongoose from 'mongoose';
 import { findOptimalTeams } from '../services/matchingEngine.js';
+import { createWorkspaceActivity, emitToProject } from '../services/workspaceEvents.js';
 
 export const createProject = async (req, res, next) => {
   try {
@@ -152,12 +153,16 @@ export const updateProject = async (req, res, next) => {
 
     await project.save();
 
-    await Activity.create({
-      project: project._id,
-      user: req.user._id,
-      action: 'project_status_changed',
-      details: `Project details or status updated to "${project.status}" by ${req.user.name}`
-    });
+    await createWorkspaceActivity(
+      req,
+      project._id,
+      'project_status_changed',
+      `Project details or status updated to "${project.status}" by ${req.user.name}`
+    );
+    const updatedProject = await Project.findById(project._id)
+      .populate('client', 'name email avatar company industry')
+      .populate('teamMembers.user', 'name email avatar title hourlyRate rating skills');
+    emitToProject(req, project._id, 'workspace:project_updated', { project: updatedProject });
 
     res.json({
       success: true,
@@ -198,6 +203,8 @@ export const deleteProject = async (req, res, next) => {
       Message.deleteMany({ project: projectId }),
       Project.deleteOne({ _id: projectId })
     ]);
+
+    emitToProject(req, projectId, 'workspace:project_deleted', { projectId });
 
     res.json({
       success: true,
@@ -267,12 +274,22 @@ export const inviteTeam = async (req, res, next) => {
     project.status = 'inviting';
     await project.save();
 
-    await Activity.create({
-      project: project._id,
-      user: req.user._id,
-      action: 'team_invited',
-      details: `${req.user.name} sent invitations to ${createdInvitations.length} team members`
+    await createWorkspaceActivity(
+      req,
+      project._id,
+      'team_invited',
+      `${req.user.name} sent invitations to ${createdInvitations.length} team members`
+    );
+    createdInvitations.forEach(invitation => {
+      emitToProject(req, project._id, 'workspace:invitation_created', { invitation });
+      emitToProject(req, project._id, 'workspace:member_added', {
+        member: project.teamMembers.find(member => member.user.toString() === invitation.freelancer.toString())
+      });
     });
+    const updatedProject = await Project.findById(project._id)
+      .populate('client', 'name email avatar company industry')
+      .populate('teamMembers.user', 'name email avatar title hourlyRate rating skills');
+    emitToProject(req, project._id, 'workspace:project_updated', { project: updatedProject });
 
     res.json({
       success: true,
@@ -300,12 +317,18 @@ export const removeTeamMember = async (req, res, next) => {
     project.teamMembers = project.teamMembers.filter(m => m.user.toString() !== memberId.toString());
     await project.save();
 
-    await Activity.create({
-      project: project._id,
-      user: req.user._id,
-      action: 'member_left',
-      details: `Team member removed from project by ${req.user.name}`
-    });
+    await createWorkspaceActivity(
+      req,
+      project._id,
+      'member_left',
+      `Team member removed from project by ${req.user.name}`
+    );
+    emitToProject(req, project._id, 'workspace:member_removed', { memberId });
+    req.app.get('socketService')?.leaveUserFromProject(memberId, project._id);
+    const updatedProject = await Project.findById(project._id)
+      .populate('client', 'name email avatar company industry')
+      .populate('teamMembers.user', 'name email avatar title hourlyRate rating skills');
+    emitToProject(req, project._id, 'workspace:project_updated', { project: updatedProject });
 
     res.json({
       success: true,

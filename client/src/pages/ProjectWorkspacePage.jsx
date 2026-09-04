@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   Layers,
@@ -42,7 +42,7 @@ const TABS = [
 export const ProjectWorkspacePage = () => {
   const { id } = useParams();
   const toast = useToast();
-  const { socket } = useSocket();
+  const { socket, isConnected, joinProject, leaveProject } = useSocket();
 
   const [activeTab, setActiveTab] = useState('overview');
   const [project, setProject] = useState(null);
@@ -52,6 +52,7 @@ export const ProjectWorkspacePage = () => {
   const [files, setFiles] = useState([]);
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
+  const wasConnectedRef = useRef(false);
 
   // Fetch all workspace data
   const fetchWorkspaceData = async () => {
@@ -82,9 +83,97 @@ export const ProjectWorkspacePage = () => {
     fetchWorkspaceData();
   }, [id]);
 
+  useEffect(() => {
+    if (!isConnected) return;
+    if (wasConnectedRef.current) fetchWorkspaceData();
+    wasConnectedRef.current = true;
+  }, [isConnected, id]);
+
+  useEffect(() => {
+    if (!id) return;
+    joinProject(id);
+    return () => leaveProject(id);
+  }, [id, joinProject, leaveProject]);
+
+  useEffect(() => {
+    if (!socket || !id) return;
+
+    const matchesWorkspace = (projectId) => projectId?.toString() === id.toString();
+    const addUnique = (items, item) => (
+      items.some(existing => existing._id?.toString() === item?._id?.toString())
+        ? items
+        : [...items, item]
+    );
+    const replaceById = (items, item) => items.map(existing => (
+      existing._id?.toString() === item?._id?.toString() ? item : existing
+    ));
+
+    const handleProjectUpdated = ({ project: updatedProject, projectId }) => {
+      if (!matchesWorkspace(projectId) && updatedProject?._id?.toString() !== id.toString()) return;
+      setProject(updatedProject);
+    };
+    const handleTaskCreated = ({ projectId, task }) => {
+      if (matchesWorkspace(projectId) && task) setTasks(prev => addUnique(prev, task));
+    };
+    const handleTaskUpdated = ({ projectId, task }) => {
+      if (matchesWorkspace(projectId) && task) setTasks(prev => replaceById(prev, task));
+    };
+    const handleTaskDeleted = ({ projectId, taskId }) => {
+      if (matchesWorkspace(projectId)) setTasks(prev => prev.filter(task => task._id?.toString() !== taskId?.toString()));
+    };
+    const handleMessageSent = ({ projectId, message }) => {
+      if (matchesWorkspace(projectId) && message) setMessages(prev => addUnique(prev, message));
+    };
+    const handleMilestoneCreated = ({ projectId, milestone }) => {
+      if (matchesWorkspace(projectId) && milestone) setMilestones(prev => addUnique(prev, milestone));
+    };
+    const handleMilestoneUpdated = ({ projectId, milestone }) => {
+      if (matchesWorkspace(projectId) && milestone) setMilestones(prev => replaceById(prev, milestone));
+    };
+    const handleFileUploaded = ({ projectId, file }) => {
+      if (matchesWorkspace(projectId) && file) setFiles(prev => addUnique(prev, file));
+    };
+    const handleFileDeleted = ({ projectId, fileId }) => {
+      if (matchesWorkspace(projectId)) setFiles(prev => prev.filter(file => file._id?.toString() !== fileId?.toString()));
+    };
+    const handleActivityCreated = ({ projectId, activity }) => {
+      if (matchesWorkspace(projectId) && activity) {
+        setActivities(prev => [...addUnique(prev, activity)].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+      }
+    };
+
+    socket.on('workspace:project_updated', handleProjectUpdated);
+    socket.on('workspace:task_created', handleTaskCreated);
+    socket.on('workspace:task_updated', handleTaskUpdated);
+    socket.on('workspace:task_deleted', handleTaskDeleted);
+    socket.on('workspace:task_status_changed', handleTaskUpdated);
+    socket.on('workspace:message_sent', handleMessageSent);
+    socket.on('workspace:milestone_created', handleMilestoneCreated);
+    socket.on('workspace:milestone_updated', handleMilestoneUpdated);
+    socket.on('workspace:milestone_status_changed', handleMilestoneUpdated);
+    socket.on('workspace:file_uploaded', handleFileUploaded);
+    socket.on('workspace:file_deleted', handleFileDeleted);
+    socket.on('workspace:activity_created', handleActivityCreated);
+
+    return () => {
+      socket.off('workspace:project_updated', handleProjectUpdated);
+      socket.off('workspace:task_created', handleTaskCreated);
+      socket.off('workspace:task_updated', handleTaskUpdated);
+      socket.off('workspace:task_deleted', handleTaskDeleted);
+      socket.off('workspace:task_status_changed', handleTaskUpdated);
+      socket.off('workspace:message_sent', handleMessageSent);
+      socket.off('workspace:milestone_created', handleMilestoneCreated);
+      socket.off('workspace:milestone_updated', handleMilestoneUpdated);
+      socket.off('workspace:milestone_status_changed', handleMilestoneUpdated);
+      socket.off('workspace:file_uploaded', handleFileUploaded);
+      socket.off('workspace:file_deleted', handleFileDeleted);
+      socket.off('workspace:activity_created', handleActivityCreated);
+    };
+  }, [socket, id]);
+
   // Real-time socket message handler
   const handleNewMessage = (newMsg) => {
-    setMessages(prev => [...prev, newMsg]);
+    setMessages(prev => prev.some(message => message._id?.toString() === newMsg?._id?.toString()) ? prev : [...prev, newMsg]);
   };
 
   if (loading) {

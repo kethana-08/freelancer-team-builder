@@ -3,6 +3,7 @@ import { Project } from '../models/Project.js';
 import { Activity } from '../models/Activity.js';
 import { uploadBuffer } from '../config/cloudinary.js';
 import path from 'path';
+import { createWorkspaceActivity, emitToProject } from '../services/workspaceEvents.js';
 
 export const getProjectFiles = async (req, res, next) => {
   try {
@@ -61,12 +62,13 @@ export const uploadProjectFile = async (req, res, next) => {
     const populatedFile = await ProjectFile.findById(projectFile._id)
       .populate('uploadedBy', 'name avatar');
 
-    await Activity.create({
-      project: projectId,
-      user: req.user._id,
-      action: 'file_uploaded',
-      details: `${req.user.name} uploaded file "${projectFile.name}"`
-    });
+    await createWorkspaceActivity(
+      req,
+      projectId,
+      'file_uploaded',
+      `${req.user.name} uploaded file "${projectFile.name}"`
+    );
+    emitToProject(req, projectId, 'workspace:file_uploaded', { file: populatedFile });
 
     res.status(201).json({
       success: true,
@@ -88,6 +90,8 @@ export const deleteProjectFile = async (req, res, next) => {
     }
 
     await file.deleteOne();
+
+    emitToProject(req, file.project, 'workspace:file_deleted', { fileId: id });
 
     res.json({
       success: true,

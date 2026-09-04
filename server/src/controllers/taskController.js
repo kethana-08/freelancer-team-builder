@@ -1,6 +1,7 @@
 import { Task } from '../models/Task.js';
 import { Project } from '../models/Project.js';
 import { Activity } from '../models/Activity.js';
+import { createWorkspaceActivity, emitToProject } from '../services/workspaceEvents.js';
 
 export const getProjectTasks = async (req, res, next) => {
   try {
@@ -56,11 +57,15 @@ export const createTask = async (req, res, next) => {
     project.progress = progress;
     await project.save();
 
-    await Activity.create({
-      project: projectId,
-      user: req.user._id,
-      action: 'task_created',
-      details: `${req.user.name} created task "${task.title}"`
+    await createWorkspaceActivity(
+      req,
+      projectId,
+      'task_created',
+      `${req.user.name} created task "${task.title}"`
+    );
+    emitToProject(req, projectId, 'workspace:task_created', {
+      task: populatedTask,
+      projectProgress: progress
     });
 
     res.status(201).json({
@@ -105,12 +110,21 @@ export const updateTask = async (req, res, next) => {
       const progress = allTasks.length > 0 ? Math.round((doneTasks.length / allTasks.length) * 100) : 0;
       await Project.findByIdAndUpdate(task.project, { progress });
 
-      await Activity.create({
-        project: task.project,
-        user: req.user._id,
-        action: 'task_status_changed',
-        details: `${req.user.name} moved "${task.title}" to ${task.status.replace('_', ' ')}`
-      });
+      await createWorkspaceActivity(
+        req,
+        task.project,
+        'task_status_changed',
+        `${req.user.name} moved "${task.title}" to ${task.status.replace('_', ' ')}`
+      );
+    }
+
+    emitToProject(req, task.project, 'workspace:task_updated', { task: populatedTask });
+    if (req.body.status && req.body.status !== prevStatus) {
+      const updatedProject = await Project.findById(task.project)
+        .populate('client', 'name email avatar company industry')
+        .populate('teamMembers.user', 'name email avatar title hourlyRate rating skills');
+      emitToProject(req, task.project, 'workspace:project_updated', { project: updatedProject });
+      emitToProject(req, task.project, 'workspace:task_status_changed', { task: populatedTask });
     }
 
     res.json({
@@ -143,12 +157,17 @@ export const deleteTask = async (req, res, next) => {
     const progress = allTasks.length > 0 ? Math.round((doneTasks.length / allTasks.length) * 100) : 0;
     await Project.findByIdAndUpdate(projectId, { progress });
 
-    await Activity.create({
-      project: projectId,
-      user: req.user._id,
-      action: 'task_deleted',
-      details: `${req.user.name} deleted task "${taskTitle}"`
-    });
+    await createWorkspaceActivity(
+      req,
+      projectId,
+      'task_deleted',
+      `${req.user.name} deleted task "${taskTitle}"`
+    );
+    emitToProject(req, projectId, 'workspace:task_deleted', { taskId: id, projectProgress: progress });
+    const updatedProject = await Project.findById(projectId)
+      .populate('client', 'name email avatar company industry')
+      .populate('teamMembers.user', 'name email avatar title hourlyRate rating skills');
+    emitToProject(req, projectId, 'workspace:project_updated', { project: updatedProject });
 
     res.json({
       success: true,
@@ -185,6 +204,8 @@ export const addTaskComment = async (req, res, next) => {
       .populate('assignedTo', 'name email avatar title')
       .populate('createdBy', 'name email avatar')
       .populate('comments.user', 'name avatar');
+
+    emitToProject(req, task.project, 'workspace:task_updated', { task: populatedTask });
 
     res.json({
       success: true,

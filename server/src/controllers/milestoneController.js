@@ -1,6 +1,7 @@
 import { Milestone } from '../models/Milestone.js';
 import { Project } from '../models/Project.js';
 import { Activity } from '../models/Activity.js';
+import { createWorkspaceActivity, emitToProject } from '../services/workspaceEvents.js';
 
 export const getMilestones = async (req, res, next) => {
   try {
@@ -39,12 +40,13 @@ export const createMilestone = async (req, res, next) => {
       status: 'pending'
     });
 
-    await Activity.create({
-      project: projectId,
-      user: req.user._id,
-      action: 'milestone_created',
-      details: `${req.user.name} created milestone "${milestone.title}" ($${milestone.amount})`
-    });
+    await createWorkspaceActivity(
+      req,
+      projectId,
+      'milestone_created',
+      `${req.user.name} created milestone "${milestone.title}" ($${milestone.amount})`
+    );
+    emitToProject(req, projectId, 'workspace:milestone_created', { milestone });
 
     res.status(201).json({
       success: true,
@@ -74,12 +76,14 @@ export const submitDeliverable = async (req, res, next) => {
 
     await milestone.save();
 
-    await Activity.create({
-      project: milestone.project,
-      user: req.user._id,
-      action: 'milestone_submitted',
-      details: `${req.user.name} submitted deliverables for "${milestone.title}"`
-    });
+    await createWorkspaceActivity(
+      req,
+      milestone.project,
+      'milestone_submitted',
+      `${req.user.name} submitted deliverables for "${milestone.title}"`
+    );
+    emitToProject(req, milestone.project, 'workspace:milestone_updated', { milestone });
+    emitToProject(req, milestone.project, 'workspace:milestone_status_changed', { milestone });
 
     res.json({
       success: true,
@@ -110,12 +114,14 @@ export const approveMilestone = async (req, res, next) => {
     milestone.paidAt = new Date();
     await milestone.save();
 
-    await Activity.create({
-      project: milestone.project,
-      user: req.user._id,
-      action: 'milestone_approved',
-      details: `${req.user.name} approved & released payment for "${milestone.title}" ($${milestone.amount})`
-    });
+    await createWorkspaceActivity(
+      req,
+      milestone.project,
+      'milestone_approved',
+      `${req.user.name} approved & released payment for "${milestone.title}" ($${milestone.amount})`
+    );
+    emitToProject(req, milestone.project, 'workspace:milestone_updated', { milestone });
+    emitToProject(req, milestone.project, 'workspace:milestone_status_changed', { milestone });
 
     res.json({
       success: true,

@@ -2,6 +2,7 @@ import { Invitation } from '../models/Invitation.js';
 import { Project } from '../models/Project.js';
 import { Message } from '../models/Message.js';
 import { Activity } from '../models/Activity.js';
+import { createWorkspaceActivity, emitToProject } from '../services/workspaceEvents.js';
 
 export const getMyInvitations = async (req, res, next) => {
   try {
@@ -82,20 +83,36 @@ export const respondToInvitation = async (req, res, next) => {
         isSystemMessage: true
       });
 
-      // Log activity
-      await Activity.create({
+      const populatedMessage = await Message.findOne({
         project: project._id,
-        user: req.user._id,
-        action: 'member_joined',
-        details: `${req.user.name} accepted the invitation and joined the project team`
-      });
+        sender: req.user._id,
+        isSystemMessage: true
+      }).sort('-createdAt').populate('sender', 'name email avatar role title');
+
+      // Log activity
+      await createWorkspaceActivity(
+        req,
+        project._id,
+        'member_joined',
+        `${req.user.name} accepted the invitation and joined the project team`
+      );
+      emitToProject(req, project._id, 'workspace:message_sent', { message: populatedMessage });
+      emitToProject(req, project._id, 'workspace:member_added', { memberId: req.user._id.toString() });
     } else {
       // Remove from team members or set declined
       project.teamMembers = project.teamMembers.filter(
         m => m.user.toString() !== req.user._id.toString()
       );
       await project.save();
+      req.app.get('socketService')?.leaveUserFromProject(req.user._id, project._id);
+      emitToProject(req, project._id, 'workspace:member_removed', { memberId: req.user._id.toString() });
     }
+
+    emitToProject(req, project._id, 'workspace:invitation_updated', { invitation });
+    const updatedProject = await Project.findById(project._id)
+      .populate('client', 'name email avatar company industry')
+      .populate('teamMembers.user', 'name email avatar title hourlyRate rating skills');
+    emitToProject(req, project._id, 'workspace:project_updated', { project: updatedProject });
 
     res.json({
       success: true,

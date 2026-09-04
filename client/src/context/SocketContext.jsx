@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 
@@ -9,6 +9,7 @@ export const SocketProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [isConnected, setIsConnected] = useState(false);
+  const joinedProjectsRef = useRef(new Set());
 
   useEffect(() => {
   const socketUrl = import.meta.env.VITE_API_URL
@@ -26,6 +27,9 @@ export const SocketProvider = ({ children }) => {
 
   newSocket.on('connect', () => {
     setIsConnected(true);
+    joinedProjectsRef.current.forEach(projectId => {
+      newSocket.emit('join_project', { projectId });
+    });
   });
 
   newSocket.on('disconnect', () => {
@@ -54,15 +58,15 @@ export const SocketProvider = ({ children }) => {
 }, [token, user?._id]);
 
   const joinProject = (projectId) => {
-    if (socket && isConnected) {
-      socket.emit('join_project', { projectId });
-    }
+    if (!projectId) return;
+    joinedProjectsRef.current.add(projectId.toString());
+    if (socket && isConnected) socket.emit('join_project', { projectId });
   };
 
   const leaveProject = (projectId) => {
-    if (socket && isConnected) {
-      socket.emit('leave_project', { projectId });
-    }
+    if (!projectId) return;
+    joinedProjectsRef.current.delete(projectId.toString());
+    if (socket && isConnected) socket.emit('leave_project', { projectId });
   };
 
   const startTyping = (projectId, userName) => {

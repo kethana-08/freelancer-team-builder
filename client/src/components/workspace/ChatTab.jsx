@@ -10,7 +10,7 @@ import { useToast } from '../../context/ToastContext';
 
 export const ChatTab = ({ project, messages = [], onNewMessage }) => {
   const { user } = useAuth();
-  const { socket, joinProject, leaveProject, startTyping, stopTyping } = useSocket();
+  const { socket, startTyping, stopTyping } = useSocket();
   const toast = useToast();
 
   const [inputMessage, setInputMessage] = useState('');
@@ -19,18 +19,6 @@ export const ChatTab = ({ project, messages = [], onNewMessage }) => {
 
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
-
-  // Join project room on mount
-  useEffect(() => {
-    if (project?._id) {
-      joinProject(project._id);
-    }
-    return () => {
-      if (project?._id) {
-        leaveProject(project._id);
-      }
-    };
-  }, [project?._id]);
 
   // Listen for socket events
   useEffect(() => {
