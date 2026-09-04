@@ -8,6 +8,10 @@ const api = axios.create({
 });
 // Attach Authorization Bearer token to every request
 api.interceptors.request.use((config) => {
+  if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
+
   const token = localStorage.getItem('team_builder_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

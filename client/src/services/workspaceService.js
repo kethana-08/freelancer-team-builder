@@ -66,9 +66,7 @@ export const workspaceService = {
   },
 
   uploadFile: async (projectId, formData) => {
-    const response = await api.post(`/files/project/${projectId}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    const response = await api.post(`/files/project/${projectId}`, formData, { timeout: 120000 });
     return response.data;
   },
 

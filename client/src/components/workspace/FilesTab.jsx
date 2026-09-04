@@ -16,6 +16,7 @@ import { Modal } from '../common/Modal';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { workspaceService } from '../../services/workspaceService';
+import { MAX_UPLOAD_SIZE_BYTES, MAX_UPLOAD_SIZE_MB } from '../../utils/upload';
 
 export const FilesTab = ({ project, files = [], onFileUpdate }) => {
   const { user } = useAuth();
@@ -55,6 +56,10 @@ export const FilesTab = ({ project, files = [], onFileUpdate }) => {
       toast.error('Please select a file to upload.');
       return;
     }
+    if (selectedFile.size > MAX_UPLOAD_SIZE_BYTES) {
+      toast.error(`File is too large. Maximum supported size is ${MAX_UPLOAD_SIZE_MB} MB.`);
+      return;
+    }
 
     try {
       setUploading(true);
@@ -68,7 +73,15 @@ export const FilesTab = ({ project, files = [], onFileUpdate }) => {
       setSelectedFile(null);
       onFileUpdate();
     } catch (err) {
-      toast.error('Failed to upload file.');
+      const status = err.response?.status;
+      const message = err.response?.data?.message;
+      toast.error(
+        status === 401
+          ? 'Your session has expired. Please log in again.'
+          : message || (err.code === 'ECONNABORTED'
+            ? 'Upload timed out. Please check your connection and try again.'
+            : 'File upload failed. Please try again.')
+      );
     } finally {
       setUploading(false);
     }
@@ -186,7 +199,14 @@ export const FilesTab = ({ project, files = [], onFileUpdate }) => {
         subtitle="Share documents, design prototypes, or source archives with your team."
       >
         <form onSubmit={handleUpload} className="space-y-4">
-          <div className="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl p-8 text-center cursor-pointer bg-slate-950/60">
+          <div
+            className="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl p-8 text-center cursor-pointer bg-slate-950/60"
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              setSelectedFile(e.dataTransfer.files[0] || null);
+            }}
+          >
             <input
               type="file"
               id="file-upload-input"
@@ -195,11 +215,11 @@ export const FilesTab = ({ project, files = [], onFileUpdate }) => {
             />
             <label htmlFor="file-upload-input" className="cursor-pointer block">
               <Upload className="w-8 h-8 text-indigo-400 mx-auto mb-2" />
-              <div className="text-sm font-semibold text-slate-200">
+              <div className="text-sm font-semibold text-slate-200 break-words">
                 {selectedFile ? selectedFile.name : 'Choose a file or drag it here'}
               </div>
               <div className="text-xs text-slate-500 mt-1">
-                Supports images, PDF, code files, and zip archives (max 25MB)
+                Supports images, CSV, PDF, code files, and zip archives (max {MAX_UPLOAD_SIZE_MB}MB)
               </div>
             </label>
           </div>

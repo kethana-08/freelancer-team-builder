@@ -23,6 +23,11 @@ export const errorHandler = (err, req, res, next) => {
     message = `Resource not found with id of ${err.value}`;
   }
 
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    statusCode = 413;
+    message = 'File is too large. Maximum supported size is 4 MB.';
+  }
+
   res.status(statusCode).json({
     success: false,
     message,
