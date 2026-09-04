@@ -4,8 +4,6 @@ import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 import { connectDB } from './config/db.js';
 import { setupSocketIO } from './services/socketHandler.js';
@@ -27,18 +25,53 @@ import adminRoutes from './routes/adminRoutes.js';
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 const app = express();
 const server = http.createServer(app);
+const allowedOrigins = new Set([
+  process.env.CLIENT_URL,
+  'https://freelancer-team-builder.netlify.app',
+  'http://localhost:5173',
+  'http://localhost:5174'
+].filter(Boolean));
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.has(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Origin is not allowed by CORS'));
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  credentials: true
+};
+
+let dbInitialization;
+
+const initializeDB = () => {
+  if (!dbInitialization) {
+    dbInitialization = connectDB()
+      .then(() => seedDatabase())
+      .catch((error) => {
+        dbInitialization = undefined;
+        throw error;
+      });
+  }
+
+  return dbInitialization;
+};
 
 // Initialize Socket.IO
 const io = new Server(server, {
-  cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    credentials: true
+  cors: corsOptions
+});
+
+io.use(async (_socket, next) => {
+  try {
+    await initializeDB();
+    next();
+  } catch (error) {
+    next(error);
   }
 });
 
@@ -55,12 +88,18 @@ const authLimiter = rateLimit({
 });
 
 // Middlewares
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
-  credentials: true
-}));
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+app.use(async (_req, _res, next) => {
+  try {
+    await initializeDB();
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 
 // API Routes
@@ -88,30 +127,9 @@ app.get('/api/health', (req, res) => {
 
 // Central Error Handler
 app.use(errorHandler);
-let dbInitialized = false;
 
-const initializeDB = async () => {
-  if (!dbInitialized) {
-    await connectDB();
-    await seedDatabase();
-    dbInitialized = true;
-  }
-};
-
-// Vercel serverless handler
-export default async function handler(req, res) {
-  try {
-    await initializeDB();
-    return app(req, res);
-  } catch (error) {
-    console.error('Server initialization error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Server initialization failed',
-      error: error.message
-    });
-  }
-}
+// Vercel's Fluid Compute runtime needs the HTTP server export to handle upgrades.
+export default server;
 
 // Local development server
 if (process.env.NODE_ENV !== 'production') {
