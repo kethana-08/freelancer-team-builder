@@ -21,6 +21,11 @@ export const projectService = {
     return response.data;
   },
 
+  deleteProject: async (id) => {
+    const response = await api.delete(`/projects/${id}`);
+    return response.data;
+  },
+
   inviteTeam: async (projectId, { members, message }) => {
     const response = await api.post(`/projects/${projectId}/invite-team`, { members, message });
     return response.data;

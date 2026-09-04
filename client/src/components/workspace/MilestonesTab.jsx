@@ -107,7 +107,7 @@ export const MilestonesTab = ({ project, milestones = [], onMilestoneUpdate }) =
   return (
     <div className="space-y-6">
       {/* Overview Metric Banner */}
-      <div className="bg-slate-900/80 border border-slate-800 p-6 rounded-2xl">
+      <div className="workspace-milestones-banner bg-slate-900/80 border border-slate-800 p-6 rounded-2xl">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
           <div>
             <h3 className="text-lg font-bold text-slate-100 flex items-center gap-2">
@@ -132,7 +132,7 @@ export const MilestonesTab = ({ project, milestones = [], onMilestoneUpdate }) =
         </div>
 
         {/* Financial Progress */}
-        <div className="bg-slate-950/70 p-4 rounded-xl border border-slate-800/80">
+        <div className="workspace-progress bg-slate-950/70 p-4 rounded-xl border border-slate-800/80">
           <div className="flex justify-between items-center text-xs font-semibold text-slate-300 mb-2">
             <span>Escrow Released Progress</span>
             <span className="font-mono text-emerald-400 font-bold">

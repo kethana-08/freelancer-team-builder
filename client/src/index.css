@@ -63,6 +63,17 @@ button, a, input, select, textarea { min-width: 0; }
   .navbar-brand-group, .navbar-actions { flex-shrink: 0; }
   .navbar-user-dropdown { position: fixed; top: 4rem; right: 1rem; margin-top: .5rem; }
   .navbar-mobile-menu { max-height: calc(100dvh - 4rem); overflow-y: auto; overflow-x: hidden; }
+  .workspace-header-main, .workspace-header-details, .workspace-title-row, .workspace-title, .workspace-tabs, .workspace-progress { min-width: 0; }
+  .workspace-title-row { flex-wrap: wrap; }
+  .workspace-title { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+  .workspace-meta { flex-wrap: wrap; row-gap: .25rem; }
+  .workspace-quick-links { width: 100%; }
+  .workspace-quick-links > a, .workspace-quick-links > a > button { width: 100%; }
+  .workspace-tabs { width: 100%; max-width: 100%; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+  .workspace-tab { flex: 0 0 auto; }
+  .workspace-progress > div:first-child { flex-wrap: wrap; gap: .25rem .75rem; }
+  .workspace-progress > div:first-child > span:last-child { white-space: normal; text-align: right; }
+  .workspace-milestones-banner { padding: 1rem; }
 }
 
 @media (max-width: 479px) {

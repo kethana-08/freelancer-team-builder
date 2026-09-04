@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { Settings, Save, AlertCircle, Trash2 } from 'lucide-react';
 import { Button } from '../common/Button';
+import { Modal } from '../common/Modal';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { projectService } from '../../services/projectService';
+import { useNavigate } from 'react-router-dom';
 
 export const SettingsTab = ({ project, onProjectUpdate }) => {
   const { user, isClient, isAdmin } = useAuth();
   const toast = useToast();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     title: project?.title || '',
@@ -19,8 +22,12 @@ export const SettingsTab = ({ project, onProjectUpdate }) => {
   });
 
   const [saving, setSaving] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const canEdit = isClient || isAdmin;
+  const projectClientId = typeof project?.client === 'object' ? project.client?._id : project?.client;
+  const canDelete = isAdmin || (isClient && projectClientId?.toString() === user?._id?.toString());
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -38,7 +45,22 @@ export const SettingsTab = ({ project, onProjectUpdate }) => {
     }
   };
 
+  const handleDelete = async () => {
+    try {
+      setDeleting(true);
+      await projectService.deleteProject(project._id);
+      toast.success('Project deleted successfully.');
+      setDeleteModalOpen(false);
+      navigate(isAdmin ? '/admin' : '/client/dashboard');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete project.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
+    <>
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-3xl">
       <div className="flex items-center justify-between pb-4 mb-6 border-b border-slate-800">
         <div>
@@ -153,5 +175,40 @@ export const SettingsTab = ({ project, onProjectUpdate }) => {
         )}
       </form>
     </div>
+    {canDelete && (
+      <div className="bg-slate-900 border border-rose-900/50 rounded-2xl p-6 max-w-3xl mt-6">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h3 className="text-base font-bold text-slate-100 flex items-center gap-2">
+              <Trash2 className="w-4 h-4 text-rose-400" />
+              Delete Project
+            </h3>
+            <p className="text-xs text-slate-400 mt-1">Permanently remove this project and its workspace data.</p>
+          </div>
+          <Button variant="danger" size="sm" icon={Trash2} onClick={() => setDeleteModalOpen(true)}>
+            Delete Project
+          </Button>
+        </div>
+      </div>
+    )}
+    <Modal
+      isOpen={deleteModalOpen}
+      onClose={() => !deleting && setDeleteModalOpen(false)}
+      title="Delete Project?"
+      subtitle={`Are you sure you want to delete "${project?.title}"? This action cannot be undone.`}
+      footer={
+        <>
+          <Button variant="secondary" onClick={() => setDeleteModalOpen(false)} disabled={deleting}>
+            Cancel
+          </Button>
+          <Button variant="danger" icon={Trash2} loading={deleting} onClick={handleDelete}>
+            Delete Project
+          </Button>
+        </>
+      }
+    >
+      <p className="text-sm text-slate-300">All tasks, milestones, invitations, files, activity, and chat messages associated with this project will be deleted.</p>
+    </Modal>
+    </>
   );
 };

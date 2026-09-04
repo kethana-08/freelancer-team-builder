@@ -111,7 +111,7 @@ export const ProjectWorkspacePage = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       {/* Top Workspace Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
-        <div className="flex items-center gap-3">
+        <div className="workspace-header-main flex items-center gap-3">
           <Link
             to={project.client?._id === project.client ? '/client/dashboard' : '/freelancer/dashboard'}
             className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
@@ -120,17 +120,17 @@ export const ProjectWorkspacePage = () => {
             <ArrowLeft className="w-4 h-4" />
           </Link>
 
-          <div>
-            <div className="flex items-center gap-2 mb-0.5">
+          <div className="workspace-header-details">
+            <div className="workspace-title-row flex items-center gap-2 mb-0.5">
               <span className="text-xs font-semibold text-slate-400">Workspace:</span>
-              <h1 className="text-lg sm:text-xl font-extrabold text-white truncate max-w-lg">
+              <h1 className="workspace-title text-lg sm:text-xl font-extrabold text-white truncate max-w-lg">
                 {project.title}
               </h1>
               <Badge variant={project.status === 'active' ? 'emerald' : 'primary'} size="xs">
                 {project.status.toUpperCase()}
               </Badge>
             </div>
-            <div className="text-xs text-slate-500 flex items-center gap-3">
+            <div className="workspace-meta text-xs text-slate-500 flex items-center gap-3">
               <span>{project.category}</span>
               <span>•</span>
               <span>{project.teamMembers?.length || 0} active members</span>
@@ -141,7 +141,7 @@ export const ProjectWorkspacePage = () => {
         </div>
 
         {/* Quick Links */}
-        <div className="flex items-center gap-2">
+        <div className="workspace-quick-links flex items-center gap-2">
           {project.recommendations && project.recommendations.length > 0 && (
             <Link to={`/projects/${project._id}/matches`}>
               <Button variant="secondary" size="sm" icon={Sparkles}>
@@ -153,7 +153,7 @@ export const ProjectWorkspacePage = () => {
       </div>
 
       {/* 8-Tab Navigation Bar */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-slate-800 scrollbar-none">
+      <div className="workspace-tabs flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-slate-800 scrollbar-none">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -162,7 +162,7 @@ export const ProjectWorkspacePage = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
+              className={`workspace-tab flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                 isActive
                   ? 'bg-indigo-600 text-white shadow-glow'
                   : 'bg-slate-900/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 border border-transparent'

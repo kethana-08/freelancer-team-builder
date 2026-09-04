@@ -2,6 +2,11 @@ import { Project } from '../models/Project.js';
 import { User } from '../models/User.js';
 import { Invitation } from '../models/Invitation.js';
 import { Activity } from '../models/Activity.js';
+import { Task } from '../models/Task.js';
+import { Milestone } from '../models/Milestone.js';
+import { ProjectFile } from '../models/ProjectFile.js';
+import { Message } from '../models/Message.js';
+import mongoose from 'mongoose';
 import { findOptimalTeams } from '../services/matchingEngine.js';
 
 export const createProject = async (req, res, next) => {
@@ -158,6 +163,45 @@ export const updateProject = async (req, res, next) => {
       success: true,
       message: 'Project updated successfully.',
       data: { project }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteProject = async (req, res, next) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).json({ success: false, message: 'Project not found.' });
+    }
+
+    const project = await Project.findById(req.params.id).select('client');
+    if (!project) {
+      return res.status(404).json({ success: false, message: 'Project not found.' });
+    }
+
+    const isOwner = project.client.toString() === req.user._id.toString();
+    if (req.user.role !== 'admin' && !isOwner) {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to delete this project.'
+      });
+    }
+
+    const projectId = project._id;
+    await Promise.all([
+      Task.deleteMany({ project: projectId }),
+      Milestone.deleteMany({ project: projectId }),
+      Invitation.deleteMany({ project: projectId }),
+      ProjectFile.deleteMany({ project: projectId }),
+      Activity.deleteMany({ project: projectId }),
+      Message.deleteMany({ project: projectId }),
+      Project.deleteOne({ _id: projectId })
+    ]);
+
+    res.json({
+      success: true,
+      message: 'Project and related data deleted successfully.'
     });
   } catch (err) {
     next(err);
