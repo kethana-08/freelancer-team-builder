@@ -15,11 +15,9 @@ export const SocketProvider = ({ children }) => {
     ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '')
     : 'http://localhost:5000';
 
-  const newSocket = io(socketUrl, {
-    auth: { token: token || '' },
-   transports: ['polling', 'websocket'],
-    upgrade: true,
-  rememberUpgrade: false,
+ const newSocket = io(socketUrl, {
+  auth: { token: token || '' },
+  transports: ['websocket'],
   forceNew: true,
   reconnection: true,
   reconnectionAttempts: 5,
