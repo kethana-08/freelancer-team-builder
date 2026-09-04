@@ -8,12 +8,12 @@ import {
   createAdminSkill,
   deleteAdminSkill
 } from '../controllers/adminController.js';
-import { protect, authorize } from '../middleware/auth.js';
+import { protect, adminOnly } from '../middleware/auth.js';
 
 const router = express.Router();
 
 router.use(protect);
-router.use(authorize('admin'));
+router.use(adminOnly);
 
 router.get('/stats', getAdminStats);
 router.get('/users', getAdminUsers);

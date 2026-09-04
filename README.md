@@ -66,7 +66,6 @@ Use the **1-Click Demo Switcher** in the top navigation bar or log in directly w
 | **Freelancer** | Alex Rivera (Fullstack) | `alex@teambuilder.io` | `Password123!` |
 | **Freelancer** | Sarah Chen (UI/UX) | `sarah@teambuilder.io` | `Password123!` |
 | **Freelancer** | Marcus Vance (DevOps) | `marcus@teambuilder.io` | `Password123!` |
-| **Admin** | Platform Overseer | `admin@teambuilder.io` | `Password123!` |
 
 ---
 

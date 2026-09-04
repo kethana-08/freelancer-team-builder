@@ -238,16 +238,6 @@ export const Navbar = () => {
                       <Badge variant="purple" size="xs">Freelancer</Badge>
                     </button>
 
-                    <button
-                      onClick={() => handleDemoSwitch('admin@teambuilder.io', 'Admin (Platform Overseer)')}
-                      className="w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between hover:bg-slate-800/80 transition-colors"
-                    >
-                      <div>
-                        <div className="font-semibold text-slate-200">Platform Admin</div>
-                        <div className="text-[10px] text-amber-400">Taxonomy & Users</div>
-                      </div>
-                      <Badge variant="amber" size="xs">Admin</Badge>
-                    </button>
                   </div>
                 </div>
               )}

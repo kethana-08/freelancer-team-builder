@@ -6,6 +6,11 @@ export const authService = {
     return response.data;
   },
 
+  adminLogin: async (credentials) => {
+    const response = await api.post('/auth/admin-login', credentials);
+    return response.data;
+  },
+
   register: async (userData) => {
     const response = await api.post('/auth/register', userData);
     return response.data;

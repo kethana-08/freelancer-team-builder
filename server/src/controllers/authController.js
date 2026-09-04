@@ -4,6 +4,14 @@ import { generateTokens, verifyRefreshToken } from '../utils/token.js';
 export const register = async (req, res, next) => {
   try {
     const { name, email, password, role, title, bio, skills, hourlyRate, company, industry } = req.body;
+    const registrationRole = role === 'client' ? 'client' : role === 'freelancer' ? 'freelancer' : null;
+
+    if (!registrationRole) {
+      return res.status(400).json({
+        success: false,
+        message: 'Registration is limited to client and freelancer accounts.'
+      });
+    }
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -14,8 +22,8 @@ export const register = async (req, res, next) => {
       name,
       email,
       password,
-      role: role || 'freelancer',
-      title: title || (role === 'client' ? 'Project Manager / Founder' : 'Software Specialist'),
+      role: registrationRole,
+      title: title || (registrationRole === 'client' ? 'Project Manager / Founder' : 'Software Specialist'),
       bio: bio || '',
       skills: Array.isArray(skills) ? skills : [],
       hourlyRate: hourlyRate ? Number(hourlyRate) : 45,
@@ -61,6 +69,10 @@ export const login = async (req, res, next) => {
       return res.status(401).json({ success: false, message: 'Invalid email or password.' });
     }
 
+    if (user.role === 'admin') {
+      return res.status(401).json({ success: false, message: 'Invalid email or password.' });
+    }
+
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid email or password.' });
@@ -87,6 +99,46 @@ export const login = async (req, res, next) => {
           title: user.title,
           skills: user.skills,
           hourlyRate: user.hourlyRate
+        },
+        accessToken,
+        refreshToken
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const adminLogin = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+    const invalidCredentials = () => res.status(401).json({
+      success: false,
+      message: 'Invalid admin credentials.'
+    });
+
+    if (!email || !password) return invalidCredentials();
+
+    const user = await User.findOne({ email: email.trim().toLowerCase(), role: 'admin' }).select('+password');
+    if (!user || !(await user.comparePassword(password)) || !user.isActive) {
+      return invalidCredentials();
+    }
+
+    const { accessToken, refreshToken } = generateTokens(user);
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    res.json({
+      success: true,
+      message: 'Admin login successful.',
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          avatar: user.avatar,
+          title: user.title
         },
         accessToken,
         refreshToken
@@ -158,6 +210,10 @@ export const demoLogin = async (req, res, next) => {
 
     if (!user) {
       return res.status(404).json({ success: false, message: `No demo account available for role ${role}.` });
+    }
+
+    if (user.role === 'admin') {
+      return res.status(401).json({ success: false, message: 'Invalid admin credentials.' });
     }
 
     const { accessToken, refreshToken } = generateTokens(user);

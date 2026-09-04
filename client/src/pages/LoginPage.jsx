@@ -109,15 +109,6 @@ export const LoginPage = () => {
               <div className="text-[10px] text-purple-400">UI/UX & Design</div>
             </button>
 
-            <button
-              type="button"
-              onClick={() => handleDemoLogin('admin@teambuilder.io', 'Admin')}
-              disabled={!!demoLoading}
-              className="px-3 py-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 hover:border-amber-500/40 rounded-xl text-left transition-all text-xs"
-            >
-              <div className="font-bold text-slate-200">Platform Admin</div>
-              <div className="text-[10px] text-amber-400">Admin Control</div>
-            </button>
           </div>
         </div>
 

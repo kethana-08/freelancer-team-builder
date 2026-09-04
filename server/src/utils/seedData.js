@@ -50,17 +50,6 @@ export const seedDatabase = async () => {
     await Skill.insertMany(initialSkills);
 
     // 2. Create Users
-    // Admin
-    const admin = await User.create({
-      name: 'Admin Overseer',
-      email: 'admin@teambuilder.io',
-      password: 'Password123!',
-      role: 'admin',
-      title: 'Platform Administrator',
-      bio: 'Oversees platform matching operations, verifies profiles, and maintains quality assurance.',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
-    });
-
     // Clients
     const clientMark = await User.create({
       name: 'Mark Sterling',

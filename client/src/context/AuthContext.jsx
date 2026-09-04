@@ -50,6 +50,19 @@ export const AuthProvider = ({ children }) => {
     return loggedUser;
   };
 
+  const adminLogin = async (credentials) => {
+    const res = await authService.adminLogin(credentials);
+    const { user: loggedUser, accessToken, refreshToken } = res.data;
+
+    localStorage.setItem('team_builder_token', accessToken);
+    localStorage.setItem('team_builder_refresh_token', refreshToken);
+    localStorage.setItem('team_builder_user', JSON.stringify(loggedUser));
+
+    setToken(accessToken);
+    setUser(loggedUser);
+    return loggedUser;
+  };
+
   const register = async (userData) => {
     const res = await authService.register(userData);
     const { user: registeredUser, accessToken, refreshToken } = res.data;
@@ -100,6 +113,7 @@ export const AuthProvider = ({ children }) => {
         isFreelancer: user?.role === 'freelancer',
         isAdmin: user?.role === 'admin',
         login,
+        adminLogin,
         register,
         demoLogin,
         logout,
