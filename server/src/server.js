@@ -132,7 +132,8 @@ app.use(errorHandler);
 export default server;
 
 // Local development server
-if (process.env.NODE_ENV !== 'production') {
+// Local development server
+if (!process.env.VERCEL) {
   const PORT = process.env.PORT || 5000;
 
   initializeDB()
