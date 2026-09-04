@@ -271,7 +271,7 @@ export const Navbar = () => {
 
                 {userDropdownOpen && (
                   <div
-                    className="absolute right-0 mt-2 w-56 rounded-2xl bg-slate-900 border border-slate-700/80 shadow-2xl p-2 z-50 backdrop-blur-xl"
+                    className="navbar-user-dropdown absolute right-0 mt-2 w-56 rounded-2xl bg-slate-900 border border-slate-700/80 shadow-2xl p-2 z-50 backdrop-blur-xl"
                     onMouseLeave={() => setUserDropdownOpen(false)}
                   >
                     <div className="p-3 border-b border-slate-800">
@@ -344,7 +344,7 @@ export const Navbar = () => {
 
       {/* Mobile Menu Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden px-4 pt-2 pb-4 bg-slate-950 border-b border-slate-800 space-y-1.5">
+        <div className="navbar-mobile-menu lg:hidden px-4 pt-2 pb-4 bg-slate-950 border-b border-slate-800 space-y-1.5">
           {isAuthenticated ? (
             <>
               {isClient && (
