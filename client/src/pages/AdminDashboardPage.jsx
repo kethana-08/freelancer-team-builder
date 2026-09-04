@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Shield,
   Users,
@@ -24,7 +25,7 @@ import { useToast } from '../context/ToastContext';
 
 export const AdminDashboardPage = () => {
   const toast = useToast();
-
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [skills, setSkills] = useState([]);
@@ -208,7 +209,12 @@ export const AdminDashboardPage = () => {
               </thead>
               <tbody className="divide-y divide-slate-800 text-slate-300">
                 {projects.map((p) => (
-                  <tr key={p._id} className="hover:bg-slate-800/40">
+                  <tr
+  key={p._id}
+  onClick={() => navigate(`/workspace/${p._id}`)}
+  className="hover:bg-slate-800/40 cursor-pointer transition-colors"
+  title="Open project workspace"
+>
                     <td className="p-4">
                       <div className="font-bold text-slate-100">{p.title}</div>
                       <div className="text-[10px] text-slate-400">{p.category}</div>
