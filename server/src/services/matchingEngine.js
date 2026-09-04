@@ -23,23 +23,38 @@ export const getPriorityWeight = (priority) => {
  * Normalized string matching for skills (handles React vs React.js vs reactjs)
  */
 export const normalizeSkillName = (str) => {
-  if (!str) return '';
-  return str.toLowerCase().replace(/[\s\-_.]/g, '').replace(/js$/, '');
+  if (str === null || str === undefined) return '';
+  return String(str).trim().toLowerCase().replace(/[\s\-_.]/g, '').replace(/js$/, '');
+};
+
+const getSkillName = (skill) => {
+  if (typeof skill === 'string') return skill;
+  if (skill && typeof skill === 'object') return skill.skill || skill.name || '';
+  return '';
+};
+
+const getSkillEntries = (skills) => {
+  if (Array.isArray(skills)) return skills;
+  if (typeof skills === 'string') return [skills];
+  if (skills && typeof skills === 'object') return Object.entries(skills).map(([skill, proficiency]) => ({ skill, proficiency }));
+  return [];
 };
 
 /**
  * Find freelancer proficiency in a specific skill
  */
 export const getFreelancerProficiency = (freelancer, targetSkill) => {
-  if (!freelancer.skills || !Array.isArray(freelancer.skills)) return 0;
   const targetNorm = normalizeSkillName(targetSkill);
+  if (!targetNorm) return 0;
 
-  const matchedSkill = freelancer.skills.find(s => {
-    const sNorm = normalizeSkillName(s.skill);
-    return sNorm === targetNorm || sNorm.includes(targetNorm) || targetNorm.includes(sNorm);
+  const matchedSkill = getSkillEntries(freelancer.skills).find(skill => {
+    return normalizeSkillName(getSkillName(skill)) === targetNorm;
   });
 
-  return matchedSkill ? (matchedSkill.proficiency || 70) : 0;
+  if (!matchedSkill) return 0;
+  if (typeof matchedSkill === 'string') return 70;
+  const proficiency = Number(matchedSkill.proficiency);
+  return Number.isFinite(proficiency) ? proficiency : 70;
 };
 
 /**
@@ -53,16 +68,18 @@ export const scoreIndividualFreelancer = (freelancer, requiredSkills, hourlyBudg
   const matchedSkills = [];
 
   requiredSkills.forEach(req => {
-    const weight = getPriorityWeight(req.priority);
-    const prof = getFreelancerProficiency(freelancer, req.skill);
+    const skill = getSkillName(req);
+    const priority = typeof req === 'object' ? req.priority : undefined;
+    const weight = getPriorityWeight(priority);
+    const prof = getFreelancerProficiency(freelancer, skill);
     totalWeightedProficiency += prof * weight;
     totalWeight += weight * 100; // max possible
 
     if (prof > 0) {
       matchedSkills.push({
-        skill: req.skill,
+        skill,
         proficiency: prof,
-        priority: req.priority
+        priority
       });
     }
   });
@@ -129,14 +146,16 @@ export const evaluateTeam = (teamMembers, requiredSkills, projectBudget = {}) =>
   const weakSkills = [];
 
   requiredSkills.forEach(req => {
-    const weight = getPriorityWeight(req.priority);
+    const skill = getSkillName(req);
+    const priority = typeof req === 'object' ? req.priority : undefined;
+    const weight = getPriorityWeight(priority);
     totalWeight += weight * 100;
 
     let bestProf = 0;
     let bestMember = null;
 
     teamMembers.forEach(member => {
-      const prof = getFreelancerProficiency(member, req.skill);
+      const prof = getFreelancerProficiency(member, skill);
       if (prof > bestProf) {
         bestProf = prof;
         bestMember = member;
@@ -146,19 +165,19 @@ export const evaluateTeam = (teamMembers, requiredSkills, projectBudget = {}) =>
     totalTeamCoveredWeight += bestProf * weight;
 
     skillCoverage.push({
-      skill: req.skill,
-      priority: req.priority,
-      requiredMin: req.minProficiency || 60,
+      skill,
+      priority,
+      requiredMin: typeof req === 'object' ? (req.minProficiency || 60) : 60,
       coveredProficiency: bestProf,
       coveredByFreelancerId: bestMember?._id || bestMember?.id,
       coveredByName: bestMember?.name || 'Unassigned',
-      isSatisfied: bestProf >= (req.minProficiency || 60)
+      isSatisfied: bestProf >= (typeof req === 'object' ? (req.minProficiency || 60) : 60)
     });
 
     if (bestProf === 0) {
-      missingSkills.push(req.skill);
-    } else if (bestProf < (req.minProficiency || 60)) {
-      weakSkills.push({ skill: req.skill, prof: bestProf });
+      missingSkills.push(skill);
+    } else if (bestProf < (typeof req === 'object' ? (req.minProficiency || 60) : 60)) {
+      weakSkills.push({ skill, prof: bestProf });
     }
   });
 
@@ -232,10 +251,10 @@ export const evaluateTeam = (teamMembers, requiredSkills, projectBudget = {}) =>
     let topSkillMatch = '';
     let topProf = 0;
     requiredSkills.forEach(req => {
-      const p = getFreelancerProficiency(member, req.skill);
+      const p = getFreelancerProficiency(member, getSkillName(req));
       if (p > topProf) {
         topProf = p;
-        topSkillMatch = req.skill;
+        topSkillMatch = getSkillName(req);
       }
     });
 
@@ -246,9 +265,11 @@ export const evaluateTeam = (teamMembers, requiredSkills, projectBudget = {}) =>
       assignedRole: roleTitle,
       matchScore: scoreIndividualFreelancer(member, requiredSkills, hourlyBudgetLimit).score,
       rate: member.hourlyRate || 45,
-      matchedSkills: member.skills ? member.skills.map(s => s.skill).filter(s => 
-        requiredSkills.some(req => normalizeSkillName(req.skill) === normalizeSkillName(s))
-      ) : []
+      matchedSkills: getSkillEntries(member.skills)
+        .map(getSkillName)
+        .filter(skill => requiredSkills.some(req =>
+          normalizeSkillName(getSkillName(req)) === normalizeSkillName(skill)
+        ))
     };
   });
 
@@ -300,8 +321,8 @@ export const findOptimalTeams = async (project, allFreelancers) => {
     }];
   }
 
-  // 2. Select top candidate pool (e.g. top 12 to 16 freelancers to limit combinatorial search)
-  const candidatePool = scoredFreelancers.slice(0, 14).map(s => s.freelancer);
+  // Evaluate team composition across every scored eligible freelancer.
+  const candidatePool = scoredFreelancers.map(s => s.freelancer);
 
   // Generate candidate combinations of size targetSize
   const allCombos = getCombinations(candidatePool, targetSize);
